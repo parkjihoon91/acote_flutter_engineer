@@ -1,10 +1,50 @@
 import 'package:acote_flutter_engineer/provider/home/home_provider.dart';
+import 'package:acote_flutter_engineer/views/home/banner_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:easy_debounce/easy_throttle.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  final ScrollController _scrollController = ScrollController();
+  final String _bannerImage = 'https://placehold.it/500x100?text=ad';
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    // 스크롤 감지
+    if (!_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    if (currentScroll >= maxScroll * 0.9) {
+      // throttle 적용
+      EasyThrottle.throttle(
+        'home_list',
+        const Duration(milliseconds: 1500),
+        () async {
+          ref.read(homeAsyncNotifierProvider.notifier).updateList();
+        },
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,13 +57,14 @@ class HomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Consumer(
-              builder: (context, ref, child) {
-                final state = ref.watch(homeFutureProvider('1'));
-                return state.when(
-                  data: (data) {
-                    return Expanded(
-                      child: ListView.separated(
+            Expanded(
+              child: Consumer(
+                builder: (context, ref, child) {
+                  final state = ref.watch(homeAsyncNotifierProvider);
+                  return state.when(
+                    data: (data) {
+                      return ListView.separated(
+                        controller: _scrollController,
                         itemBuilder: (_, index) {
                           final itemValue = data[index];
                           return ListTile(
@@ -32,6 +73,8 @@ class HomeScreen extends StatelessWidget {
                               imageUrl: itemValue.avatarUrl,
                               width: 32,
                               height: 32,
+                              errorWidget: (_, url, error) =>
+                                  const Icon(Icons.error),
                             ),
                             title: Text('name: ${itemValue.login}'),
                           );
@@ -39,21 +82,66 @@ class HomeScreen extends StatelessWidget {
                         separatorBuilder: (_, index) {
                           final bannerIdx = index + 1;
                           if (bannerIdx % 10 == 0) {
-                            return const Text('광고 배너');
+                            return InkWell(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const BannerScreen(),
+                                  ),
+                                );
+                              },
+                              child: CachedNetworkImage(
+                                imageUrl: _bannerImage,
+                                width: 32,
+                                height: 32,
+                                alignment: Alignment.centerLeft,
+                                placeholder: (_, url) => const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                                errorWidget: (_, url, error) =>
+                                    const Icon(Icons.error),
+                              ),
+                            );
                           }
                           return const SizedBox.shrink();
                         },
-                        itemCount: 30,
-                      ),
-                    );
-                  },
-                  error: (error, trace) => Center(
-                    child: Text('error: $error'),
-                  ),
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                );
+                        itemCount: data.length,
+                      );
+                    },
+                    error: (error, trace) => Center(
+                      child: Text('error: $error'),
+                    ),
+                    loading: () => const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                },
+              ),
+            ),
+            Consumer(
+              builder: (_, ref, child) {
+                final isNextPage = ref.watch(isNextPageProvider);
+                return isNextPage
+                    ? const Center(
+                        child: CircularProgressIndicator(),
+                      )
+                    : const SizedBox.shrink();
+              },
+            ),
+            Consumer(
+              builder: (_, ref, child) {
+                final isLastPage = ref.watch(isLastPageProvider);
+                return isLastPage
+                    ? const Center(
+                        child: Text(
+                          '더이상 리스트 정보가 없습니다.',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      )
+                    : const SizedBox.shrink();
               },
             ),
           ],
