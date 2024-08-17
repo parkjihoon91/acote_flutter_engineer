@@ -1,4 +1,5 @@
 import 'package:acote_flutter_engineer/common/provider/dio_provider.dart';
+import 'package:acote_flutter_engineer/model/home/home_detail_model.dart';
 import 'package:acote_flutter_engineer/model/home/home_model.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,5 +20,10 @@ abstract class HomeRepository {
   Future<HttpResponse<List<HomeModel>>> getUsers(
     @Query('per_page') String perPage,
     @Query('page') String page,
+  );
+
+  @GET('/users/{username}/repos')
+  Future<HttpResponse<List<HomeDetailModel>>> getUserDetail(
+    @Path('username') String username,
   );
 }

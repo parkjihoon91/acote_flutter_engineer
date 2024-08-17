@@ -1,5 +1,6 @@
 import 'package:acote_flutter_engineer/provider/home/home_provider.dart';
 import 'package:acote_flutter_engineer/views/home/banner_screen.dart';
+import 'package:acote_flutter_engineer/views/home/home_detail_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_debounce/easy_throttle.dart';
 import 'package:flutter/material.dart';
@@ -68,7 +69,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         itemBuilder: (_, index) {
                           final itemValue = data[index];
                           return ListTile(
-                            onTap: () {},
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => HomeDetailScreen(
+                                    username: itemValue.login,
+                                  ),
+                                ),
+                              );
+                            },
                             leading: CachedNetworkImage(
                               imageUrl: itemValue.avatarUrl,
                               width: 32,
