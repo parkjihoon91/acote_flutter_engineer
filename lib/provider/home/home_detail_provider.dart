@@ -7,11 +7,7 @@ final homeDetailProvider =
   ref,
   String username,
 ) async {
-  try {
-    final repo = ref.watch(homeRepositoryProvider);
-    final response = await repo.getUserDetail(username);
-    return response.data;
-  } catch (e) {
-    return [];
-  }
+  final repo = ref.watch(homeRepositoryProvider);
+  final response = await repo.getUserDetail(username);
+  return response.data;
 });
