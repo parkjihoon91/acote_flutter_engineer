@@ -17,6 +17,7 @@ dependencies:
   cached_network_image: ^3.4.1
   easy_debounce: ^2.0.3
   webview_flutter: ^4.8.0
+  mocktail: ^1.0.4
 
 dev_dependencies:
   flutter_test:

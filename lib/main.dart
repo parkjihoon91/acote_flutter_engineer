@@ -1,4 +1,4 @@
-import 'package:acote_flutter_engineer/views/home/home_screen.dart';
+import 'package:acote_flutter_engineer/views/main_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -16,7 +16,7 @@ class MainApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const MaterialApp(
-      home: HomeScreen(),
+      home: MainScreen(),
     );
   }
 }

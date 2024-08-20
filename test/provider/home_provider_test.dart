@@ -1,39 +1,65 @@
-import 'package:acote_flutter_engineer/model/home/home_model.dart';
-import 'package:acote_flutter_engineer/provider/home/home_detail_provider.dart';
+import 'package:acote_flutter_engineer/common/mock/mock_data.dart';
 import 'package:acote_flutter_engineer/provider/home/home_provider.dart';
+import 'package:acote_flutter_engineer/repository/home/home_repository.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:retrofit/retrofit.dart';
+
+class MockHomeRepository extends Mock implements HomeRepository {}
 
 void main() {
   late ProviderContainer container;
+  late HomeRepository homeRepository;
 
   setUpAll(() {
     container = ProviderContainer();
+    homeRepository = MockHomeRepository();
   });
 
-  test('home_provider api', () async {
-    addTearDown(container.dispose);
+  test('의존성 주입 및 객체 생성 완료', () => expect(homeRepository, isNotNull));
 
-    // 초기값
-    expect(container.read(homeAsyncNotifierProvider), isA<AsyncLoading<List<HomeModel>>>());
+  group('홈 리스트 리스트 api', () {
+    test('home api 호출완료', () async {
+      try {
+        await homeRepository.getUsers('20', '1');
+      } catch (e) {
+      }
+      // 1번 호출되었는지 확인
+      verify(() => homeRepository.getUsers(any(), any())).called(1);
+    });
 
-    await container.read(homeAsyncNotifierProvider.notifier).build();
+    test('home api 호출 실패', () async {
+      final exception = Exception('error');
+      when(() => homeRepository.getUsers(any(), any())).thenThrow(exception);
+      expect(() => homeRepository.getUsers('20', '1'), throwsA(exception));
+    });
 
-    expect(container.read(homeAsyncNotifierProvider).value?.length, 20);
-    expect(container.read(homeAsyncNotifierProvider).value?.first.login.toString(), 'mojombo');
+    test('home api 호출 성공적으로 불러옴', () async {
+      addTearDown(container.dispose);
 
-    // next page
-    await container.read(homeAsyncNotifierProvider.notifier).updateList();
-    expect(container.read(homeAsyncNotifierProvider).value?.length, 40);
-  });
+      when(() => homeRepository.getUsers('20', '1'))
+          .thenAnswer((_) async => HttpResponse(
+              homeListMockData,
+              Response(
+                requestOptions: RequestOptions(
+                    path: 'https://api.github.com/users?per_page=20&page=1'),
+                statusCode: 200,
+                data: homeListMockData,
+              )));
 
-  test('home_detail_provider api', () async {
-    addTearDown(container.dispose);
+      final actual =
+          await container.read(homeAsyncNotifierProvider.notifier).build();
+      List<Map<String, dynamic>>? actualList =
+          actual.map((model) => model.toJson()).toList();
 
-    final result = await container.read(homeDetailProvider('mojombo').future);
+      final expected = await homeRepository.getUsers('20', '1');
+      List<Map<String, dynamic>> expectedList =
+          expected.data.map((model) => model.toJson()).toList();
 
-    expect(result.first.fullName.toString(), 'mojombo/30daysoflaptops.github.io');
-
+      expect(actualList, expectedList);
+    });
   });
 
 }

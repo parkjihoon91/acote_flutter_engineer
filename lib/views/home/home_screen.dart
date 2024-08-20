@@ -40,7 +40,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       EasyThrottle.throttle(
         'home_list',
         const Duration(milliseconds: 1500),
-        () async {
+            () async {
           ref.read(homeAsyncNotifierProvider.notifier).updateList();
         },
       );
@@ -53,109 +53,163 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: AppBar(
         title: const Text('홈화면'),
       ),
-      body: SafeArea(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Consumer(
-                builder: (context, ref, child) {
-                  final state = ref.watch(homeAsyncNotifierProvider);
-                  return state.when(
-                    data: (data) {
-                      return ListView.separated(
-                        controller: _scrollController,
-                        itemBuilder: (_, index) {
-                          final itemValue = data[index];
-                          return ListTile(
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Consumer(
+              builder: (context, ref, child) {
+                final state = ref.watch(homeAsyncNotifierProvider);
+                return state.when(
+                  data: (data) {
+                    return ListView.separated(
+                      controller: _scrollController,
+                      itemBuilder: (_, index) {
+                        final itemValue = data[index];
+                        return ListTile(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => HomeDetailScreen(
+                                  username: itemValue.login,
+                                ),
+                              ),
+                            );
+                          },
+                          leading: CachedNetworkImage(
+                            imageUrl: itemValue.avatarUrl,
+                            width: 32,
+                            height: 32,
+                            errorWidget: (_, url, error) =>
+                            const Icon(Icons.error),
+                          ),
+                          title: Text('name: ${itemValue.login}'),
+                        );
+                      },
+                      separatorBuilder: (_, index) {
+                        final bannerIdx = index + 1;
+                        if (bannerIdx % 10 == 0) {
+                          return InkWell(
                             onTap: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) => HomeDetailScreen(
-                                    username: itemValue.login,
-                                  ),
+                                  builder: (_) => const BannerScreen(),
                                 ),
                               );
                             },
-                            leading: CachedNetworkImage(
-                              imageUrl: itemValue.avatarUrl,
+                            child: CachedNetworkImage(
+                              imageUrl: _bannerImage,
                               width: 32,
                               height: 32,
-                              errorWidget: (_, url, error) =>
-                                  const Icon(Icons.error),
-                            ),
-                            title: Text('name: ${itemValue.login}'),
-                          );
-                        },
-                        separatorBuilder: (_, index) {
-                          final bannerIdx = index + 1;
-                          if (bannerIdx % 10 == 0) {
-                            return InkWell(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => const BannerScreen(),
-                                  ),
-                                );
-                              },
-                              child: CachedNetworkImage(
-                                imageUrl: _bannerImage,
-                                width: 32,
-                                height: 32,
-                                alignment: Alignment.centerLeft,
-                                placeholder: (_, url) => const Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                                errorWidget: (_, url, error) =>
-                                    const Icon(Icons.error),
+                              alignment: Alignment.centerLeft,
+                              placeholder: (_, url) => const Center(
+                                child: CircularProgressIndicator(),
                               ),
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        },
-                        itemCount: data.length,
-                      );
-                    },
-                    error: (error, trace) => Center(
-                      child: Text('error: $error'),
-                    ),
-                    loading: () => const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  );
-                },
-              ),
-            ),
-            Consumer(
-              builder: (_, ref, child) {
-                final isNextPage = ref.watch(isNextPageProvider);
-                return isNextPage
-                    ? const Center(
-                        child: CircularProgressIndicator(),
-                      )
-                    : const SizedBox.shrink();
+                              errorWidget: (_, url, error) =>
+                              const Icon(Icons.error),
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                      itemCount: data.length,
+                    );
+                  },
+                  error: (error, trace) => Center(
+                    child: Text('error: $error'),
+                  ),
+                  loading: () => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
               },
             ),
-            Consumer(
-              builder: (_, ref, child) {
-                final isLastPage = ref.watch(isLastPageProvider);
-                return isLastPage
-                    ? const Center(
-                        child: Text(
-                          '더이상 리스트 정보가 없습니다.',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      )
-                    : const SizedBox.shrink();
-              },
-            ),
-          ],
+          ),
+          Consumer(
+            builder: (_, ref, child) {
+              final isNextPage = ref.watch(isNextPageProvider);
+              return isNextPage
+                  ? const Center(
+                child: CircularProgressIndicator(),
+              )
+                  : const SizedBox.shrink();
+            },
+          ),
+          Consumer(
+            builder: (_, ref, child) {
+              final isLastPage = ref.watch(isLastPageProvider);
+              return isLastPage
+                  ? const Center(
+                child: Text(
+                  '더이상 리스트 정보가 없습니다.',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              )
+                  : const SizedBox.shrink();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+class AlarmScreen extends StatelessWidget {
+  const AlarmScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('알림화면'),
+      ),
+      body: const SafeArea(
+        child: Center(
+          child: Text('알림화면'),
         ),
       ),
     );
   }
 }
+
+class SearchScreen extends StatelessWidget {
+  const SearchScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('탐색화면'),
+      ),
+      body: const SafeArea(
+        child: Center(
+          child: Text('탐색화면'),
+        ),
+      ),
+    );
+  }
+}
+
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('프로필화면'),
+      ),
+      body: const SafeArea(
+        child: Center(
+          child: Text('프로필화면'),
+        ),
+      ),
+    );
+  }
+}
+
